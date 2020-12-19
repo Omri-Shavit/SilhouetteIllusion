@@ -53,14 +53,12 @@
         "gentilis": 2,
         "droid/droid_sans": 3,
         "droid/droid_serif": 4
-
     };
 
     const weightMap = {
 
         "regular": 0,
         "bold": 1
-
     };
 
     const reverseFontMap = [];
@@ -337,12 +335,38 @@
 
     function createText() {
 
+        let split_text = text.split( " " );
+
+        var text2;
+        if (split_text.length > 1) {
+            text2 = split_text[1]
+        } else {
+            text2 = "";
+        }
+
+        tempObject = new THREE.TextGeometry( text2, {
+
+            font: font,
+
+            size: size,
+            height: 30,
+            curveSegments: curveSegments,
+
+            bevelThickness: bevelThickness,
+            bevelSize: bevelSize,
+            bevelEnabled: bevelEnabled
+
+        } );
+        tempObject.computeBoundingBox();
+        let shape1Height = tempObject.boundingBox.max.x - tempObject.boundingBox.min.x;
+
+
         textGeo = new THREE.TextGeometry( text.split(" ")[0], {
 
             font: font,
 
             size: size,
-            height: height,
+            height: shape1Height,
             curveSegments: curveSegments,
 
             bevelThickness: bevelThickness,
@@ -389,13 +413,9 @@
                             face.vertexNormals[ j ].copy( face.normal );
 
                         }
-
                     }
-
                 }
-
             }
-
         }
 
         const centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
@@ -450,12 +470,28 @@
             text2 = "";
         }
 
+        tempObject = new THREE.TextGeometry( text.split(" ")[0], {
+
+            font: font,
+
+            size: size,
+            height: 50,
+            curveSegments: curveSegments,
+
+            bevelThickness: bevelThickness,
+            bevelSize: bevelSize,
+            bevelEnabled: bevelEnabled
+
+        } );
+        tempObject.computeBoundingBox();
+        let shape2Height = tempObject.boundingBox.max.x - tempObject.boundingBox.min.x;
+        console.log(shape2Height);
         textGeo2 = new THREE.TextGeometry( text2, {
 
             font: font,
 
             size: size,
-            height: height,
+            height: shape2Height,
             curveSegments: curveSegments,
 
             bevelThickness: bevelThickness,
