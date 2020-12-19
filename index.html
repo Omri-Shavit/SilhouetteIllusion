@@ -25,37 +25,71 @@
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshPhongMaterial( { color: "#2d9cd2" } );
-    const cube = new THREE.Mesh( geometry, material );
+    const loader = new THREE.FontLoader();
 
-    const controls = new THREE.OrbitControls( camera, renderer.domElement );
+    loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
 
-    scene.add( cube );
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshPhongMaterial( { color: "#2d9cd2" } );
+        const cube = new THREE.Mesh( geometry, material );
 
-    const color = 0xFFFFFF;
-    const intensity = 2;
-    const light = new THREE.DirectionalLight(color, intensity);
-    light.position.set(3, 2, 4);
-    scene.add(light);
+        const controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-    const light2 = new THREE.DirectionalLight(color, 1);
-    light2.position.set(-3, 2, 4);
-    scene.add(light2);
+        scene.add( cube );
 
-    camera.position.z = 5;
+        const color = 0xFFFFFF;
+        const intensity = 2;
 
-    controls.update();
+        var light = new THREE.DirectionalLight(0x444444, 1)
+        light.position.set(0, 0, 1).normalize()
+        scene.add(light)
 
-    const animate = function () {
-        requestAnimationFrame( animate );
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
+        // const light2 = new THREE.PointLight("#bae31c", 0.5);
+        // light2.position.set(-3, 2, 4);
+        // scene.add(light2);
+        //
+        // const light3 = new THREE.PointLight("#5445ba", 0.5);
+        // light3.position.set(-3, -4, 4);
+        // scene.add(light3);
+        //
+        // const light4 = new THREE.PointLight("#2ad596", 0.5);
+        // light4.position.set(3, -4, 4);
+        // scene.add(light4);
+
+        camera.position.z = 5;
+
+        geometrytext = new THREE.TextGeometry( 'Hello three.js!', {
+            font: font,
+            size: 5,
+            height: 20,
+            curveSegments: 12,
+            bevelEnabled: false,
+            bevelThickness: 3,
+            bevelSize: 8,
+            bevelOffset: 0,
+            bevelSegments: 5
+        } );
+
+        const textshape = new THREE.MeshPhongMaterial( geometrytext, material );
+
+        textshape.position.z = -40
+        textshape.position.y = -10
+        textshape.position.x = -20
 
         controls.update();
 
-        renderer.render( scene, camera );
-    };
+        const animate = function () {
+            requestAnimationFrame( animate );
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            controls.update();
+            renderer.render( scene, camera );
+        };
+
+        camera.pointA
+
+        scene.add(textshape)
+    } );
 
     animate();
 </script>
