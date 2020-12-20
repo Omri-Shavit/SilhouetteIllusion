@@ -1,11 +1,11 @@
 import {
-	BufferAttribute,
-	BufferGeometry,
-	FileLoader,
-	Float32BufferAttribute,
-	Loader,
-	LoaderUtils,
-	Vector3
+    BufferAttribute,
+    BufferGeometry,
+    FileLoader,
+    Float32BufferAttribute,
+    Loader,
+    LoaderUtils,
+    Vector3
 } from "../../../build/three.module.js";
 
 /**
@@ -62,340 +62,340 @@ import {
 
 var STLLoader = function ( manager ) {
 
-	Loader.call( this, manager );
+    Loader.call( this, manager );
 
 };
 
 STLLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 
-	constructor: STLLoader,
+    constructor: STLLoader,
 
-	load: function ( url, onLoad, onProgress, onError ) {
+    load: function ( url, onLoad, onProgress, onError ) {
 
-		var scope = this;
+        var scope = this;
 
-		var loader = new FileLoader( this.manager );
-		loader.setPath( this.path );
-		loader.setResponseType( 'arraybuffer' );
-		loader.setRequestHeader( this.requestHeader );
-		loader.setWithCredentials( this.withCredentials );
+        var loader = new FileLoader( this.manager );
+        loader.setPath( this.path );
+        loader.setResponseType( 'arraybuffer' );
+        loader.setRequestHeader( this.requestHeader );
+        loader.setWithCredentials( this.withCredentials );
 
-		loader.load( url, function ( text ) {
+        loader.load( url, function ( text ) {
 
-			try {
+            try {
 
-				onLoad( scope.parse( text ) );
+                onLoad( scope.parse( text ) );
 
-			} catch ( e ) {
+            } catch ( e ) {
 
-				if ( onError ) {
+                if ( onError ) {
 
-					onError( e );
+                    onError( e );
 
-				} else {
+                } else {
 
-					console.error( e );
+                    console.error( e );
 
-				}
+                }
 
-				scope.manager.itemError( url );
+                scope.manager.itemError( url );
 
-			}
+            }
 
-		}, onProgress, onError );
+        }, onProgress, onError );
 
-	},
+    },
 
-	parse: function ( data ) {
+    parse: function ( data ) {
 
-		function isBinary( data ) {
+        function isBinary( data ) {
 
-			var expect, face_size, n_faces, reader;
-			reader = new DataView( data );
-			face_size = ( 32 / 8 * 3 ) + ( ( 32 / 8 * 3 ) * 3 ) + ( 16 / 8 );
-			n_faces = reader.getUint32( 80, true );
-			expect = 80 + ( 32 / 8 ) + ( n_faces * face_size );
+            var expect, face_size, n_faces, reader;
+            reader = new DataView( data );
+            face_size = ( 32 / 8 * 3 ) + ( ( 32 / 8 * 3 ) * 3 ) + ( 16 / 8 );
+            n_faces = reader.getUint32( 80, true );
+            expect = 80 + ( 32 / 8 ) + ( n_faces * face_size );
 
-			if ( expect === reader.byteLength ) {
+            if ( expect === reader.byteLength ) {
 
-				return true;
+                return true;
 
-			}
+            }
 
-			// An ASCII STL data must begin with 'solid ' as the first six bytes.
-			// However, ASCII STLs lacking the SPACE after the 'd' are known to be
-			// plentiful.  So, check the first 5 bytes for 'solid'.
+            // An ASCII STL data must begin with 'solid ' as the first six bytes.
+            // However, ASCII STLs lacking the SPACE after the 'd' are known to be
+            // plentiful.  So, check the first 5 bytes for 'solid'.
 
-			// Several encodings, such as UTF-8, precede the text with up to 5 bytes:
-			// https://en.wikipedia.org/wiki/Byte_order_mark#Byte_order_marks_by_encoding
-			// Search for "solid" to start anywhere after those prefixes.
+            // Several encodings, such as UTF-8, precede the text with up to 5 bytes:
+            // https://en.wikipedia.org/wiki/Byte_order_mark#Byte_order_marks_by_encoding
+            // Search for "solid" to start anywhere after those prefixes.
 
-			// US-ASCII ordinal values for 's', 'o', 'l', 'i', 'd'
+            // US-ASCII ordinal values for 's', 'o', 'l', 'i', 'd'
 
-			var solid = [ 115, 111, 108, 105, 100 ];
+            var solid = [ 115, 111, 108, 105, 100 ];
 
-			for ( var off = 0; off < 5; off ++ ) {
+            for ( var off = 0; off < 5; off ++ ) {
 
-				// If "solid" text is matched to the current offset, declare it to be an ASCII STL.
+                // If "solid" text is matched to the current offset, declare it to be an ASCII STL.
 
-				if ( matchDataViewAt( solid, reader, off ) ) return false;
+                if ( matchDataViewAt( solid, reader, off ) ) return false;
 
-			}
+            }
 
-			// Couldn't find "solid" text at the beginning; it is binary STL.
+            // Couldn't find "solid" text at the beginning; it is binary STL.
 
-			return true;
+            return true;
 
-		}
+        }
 
-		function matchDataViewAt( query, reader, offset ) {
+        function matchDataViewAt( query, reader, offset ) {
 
-			// Check if each byte in query matches the corresponding byte from the current offset
+            // Check if each byte in query matches the corresponding byte from the current offset
 
-			for ( var i = 0, il = query.length; i < il; i ++ ) {
+            for ( var i = 0, il = query.length; i < il; i ++ ) {
 
-				if ( query[ i ] !== reader.getUint8( offset + i, false ) ) return false;
+                if ( query[ i ] !== reader.getUint8( offset + i, false ) ) return false;
 
-			}
+            }
 
-			return true;
+            return true;
 
-		}
+        }
 
-		function parseBinary( data ) {
+        function parseBinary( data ) {
 
-			var reader = new DataView( data );
-			var faces = reader.getUint32( 80, true );
+            var reader = new DataView( data );
+            var faces = reader.getUint32( 80, true );
 
-			var r, g, b, hasColors = false, colors;
-			var defaultR, defaultG, defaultB, alpha;
+            var r, g, b, hasColors = false, colors;
+            var defaultR, defaultG, defaultB, alpha;
 
-			// process STL header
-			// check for default color in header ("COLOR=rgba" sequence).
+            // process STL header
+            // check for default color in header ("COLOR=rgba" sequence).
 
-			for ( var index = 0; index < 80 - 10; index ++ ) {
+            for ( var index = 0; index < 80 - 10; index ++ ) {
 
-				if ( ( reader.getUint32( index, false ) == 0x434F4C4F /*COLO*/ ) &&
-					( reader.getUint8( index + 4 ) == 0x52 /*'R'*/ ) &&
-					( reader.getUint8( index + 5 ) == 0x3D /*'='*/ ) ) {
+                if ( ( reader.getUint32( index, false ) == 0x434F4C4F /*COLO*/ ) &&
+                    ( reader.getUint8( index + 4 ) == 0x52 /*'R'*/ ) &&
+                    ( reader.getUint8( index + 5 ) == 0x3D /*'='*/ ) ) {
 
-					hasColors = true;
-					colors = new Float32Array( faces * 3 * 3 );
+                    hasColors = true;
+                    colors = new Float32Array( faces * 3 * 3 );
 
-					defaultR = reader.getUint8( index + 6 ) / 255;
-					defaultG = reader.getUint8( index + 7 ) / 255;
-					defaultB = reader.getUint8( index + 8 ) / 255;
-					alpha = reader.getUint8( index + 9 ) / 255;
+                    defaultR = reader.getUint8( index + 6 ) / 255;
+                    defaultG = reader.getUint8( index + 7 ) / 255;
+                    defaultB = reader.getUint8( index + 8 ) / 255;
+                    alpha = reader.getUint8( index + 9 ) / 255;
 
-				}
+                }
 
-			}
+            }
 
-			var dataOffset = 84;
-			var faceLength = 12 * 4 + 2;
+            var dataOffset = 84;
+            var faceLength = 12 * 4 + 2;
 
-			var geometry = new BufferGeometry();
+            var geometry = new BufferGeometry();
 
-			var vertices = new Float32Array( faces * 3 * 3 );
-			var normals = new Float32Array( faces * 3 * 3 );
+            var vertices = new Float32Array( faces * 3 * 3 );
+            var normals = new Float32Array( faces * 3 * 3 );
 
-			for ( var face = 0; face < faces; face ++ ) {
+            for ( var face = 0; face < faces; face ++ ) {
 
-				var start = dataOffset + face * faceLength;
-				var normalX = reader.getFloat32( start, true );
-				var normalY = reader.getFloat32( start + 4, true );
-				var normalZ = reader.getFloat32( start + 8, true );
+                var start = dataOffset + face * faceLength;
+                var normalX = reader.getFloat32( start, true );
+                var normalY = reader.getFloat32( start + 4, true );
+                var normalZ = reader.getFloat32( start + 8, true );
 
-				if ( hasColors ) {
+                if ( hasColors ) {
 
-					var packedColor = reader.getUint16( start + 48, true );
+                    var packedColor = reader.getUint16( start + 48, true );
 
-					if ( ( packedColor & 0x8000 ) === 0 ) {
+                    if ( ( packedColor & 0x8000 ) === 0 ) {
 
-						// facet has its own unique color
+                        // facet has its own unique color
 
-						r = ( packedColor & 0x1F ) / 31;
-						g = ( ( packedColor >> 5 ) & 0x1F ) / 31;
-						b = ( ( packedColor >> 10 ) & 0x1F ) / 31;
+                        r = ( packedColor & 0x1F ) / 31;
+                        g = ( ( packedColor >> 5 ) & 0x1F ) / 31;
+                        b = ( ( packedColor >> 10 ) & 0x1F ) / 31;
 
-					} else {
+                    } else {
 
-						r = defaultR;
-						g = defaultG;
-						b = defaultB;
+                        r = defaultR;
+                        g = defaultG;
+                        b = defaultB;
 
-					}
+                    }
 
-				}
+                }
 
-				for ( var i = 1; i <= 3; i ++ ) {
+                for ( var i = 1; i <= 3; i ++ ) {
 
-					var vertexstart = start + i * 12;
-					var componentIdx = ( face * 3 * 3 ) + ( ( i - 1 ) * 3 );
+                    var vertexstart = start + i * 12;
+                    var componentIdx = ( face * 3 * 3 ) + ( ( i - 1 ) * 3 );
 
-					vertices[ componentIdx ] = reader.getFloat32( vertexstart, true );
-					vertices[ componentIdx + 1 ] = reader.getFloat32( vertexstart + 4, true );
-					vertices[ componentIdx + 2 ] = reader.getFloat32( vertexstart + 8, true );
+                    vertices[ componentIdx ] = reader.getFloat32( vertexstart, true );
+                    vertices[ componentIdx + 1 ] = reader.getFloat32( vertexstart + 4, true );
+                    vertices[ componentIdx + 2 ] = reader.getFloat32( vertexstart + 8, true );
 
-					normals[ componentIdx ] = normalX;
-					normals[ componentIdx + 1 ] = normalY;
-					normals[ componentIdx + 2 ] = normalZ;
+                    normals[ componentIdx ] = normalX;
+                    normals[ componentIdx + 1 ] = normalY;
+                    normals[ componentIdx + 2 ] = normalZ;
 
-					if ( hasColors ) {
+                    if ( hasColors ) {
 
-						colors[ componentIdx ] = r;
-						colors[ componentIdx + 1 ] = g;
-						colors[ componentIdx + 2 ] = b;
+                        colors[ componentIdx ] = r;
+                        colors[ componentIdx + 1 ] = g;
+                        colors[ componentIdx + 2 ] = b;
 
-					}
+                    }
 
-				}
+                }
 
-			}
+            }
 
-			geometry.setAttribute( 'position', new BufferAttribute( vertices, 3 ) );
-			geometry.setAttribute( 'normal', new BufferAttribute( normals, 3 ) );
+            geometry.setAttribute( 'position', new BufferAttribute( vertices, 3 ) );
+            geometry.setAttribute( 'normal', new BufferAttribute( normals, 3 ) );
 
-			if ( hasColors ) {
+            if ( hasColors ) {
 
-				geometry.setAttribute( 'color', new BufferAttribute( colors, 3 ) );
-				geometry.hasColors = true;
-				geometry.alpha = alpha;
+                geometry.setAttribute( 'color', new BufferAttribute( colors, 3 ) );
+                geometry.hasColors = true;
+                geometry.alpha = alpha;
 
-			}
+            }
 
-			return geometry;
+            return geometry;
 
-		}
+        }
 
-		function parseASCII( data ) {
+        function parseASCII( data ) {
 
-			var geometry = new BufferGeometry();
-			var patternSolid = /solid([\s\S]*?)endsolid/g;
-			var patternFace = /facet([\s\S]*?)endfacet/g;
-			var faceCounter = 0;
+            var geometry = new BufferGeometry();
+            var patternSolid = /solid([\s\S]*?)endsolid/g;
+            var patternFace = /facet([\s\S]*?)endfacet/g;
+            var faceCounter = 0;
 
-			var patternFloat = /[\s]+([+-]?(?:\d*)(?:\.\d*)?(?:[eE][+-]?\d+)?)/.source;
-			var patternVertex = new RegExp( 'vertex' + patternFloat + patternFloat + patternFloat, 'g' );
-			var patternNormal = new RegExp( 'normal' + patternFloat + patternFloat + patternFloat, 'g' );
+            var patternFloat = /[\s]+([+-]?(?:\d*)(?:\.\d*)?(?:[eE][+-]?\d+)?)/.source;
+            var patternVertex = new RegExp( 'vertex' + patternFloat + patternFloat + patternFloat, 'g' );
+            var patternNormal = new RegExp( 'normal' + patternFloat + patternFloat + patternFloat, 'g' );
 
-			var vertices = [];
-			var normals = [];
+            var vertices = [];
+            var normals = [];
 
-			var normal = new Vector3();
+            var normal = new Vector3();
 
-			var result;
+            var result;
 
-			var groupCount = 0;
-			var startVertex = 0;
-			var endVertex = 0;
+            var groupCount = 0;
+            var startVertex = 0;
+            var endVertex = 0;
 
-			while ( ( result = patternSolid.exec( data ) ) !== null ) {
+            while ( ( result = patternSolid.exec( data ) ) !== null ) {
 
-				startVertex = endVertex;
+                startVertex = endVertex;
 
-				var solid = result[ 0 ];
+                var solid = result[ 0 ];
 
-				while ( ( result = patternFace.exec( solid ) ) !== null ) {
+                while ( ( result = patternFace.exec( solid ) ) !== null ) {
 
-					var vertexCountPerFace = 0;
-					var normalCountPerFace = 0;
+                    var vertexCountPerFace = 0;
+                    var normalCountPerFace = 0;
 
-					var text = result[ 0 ];
+                    var text = result[ 0 ];
 
-					while ( ( result = patternNormal.exec( text ) ) !== null ) {
+                    while ( ( result = patternNormal.exec( text ) ) !== null ) {
 
-						normal.x = parseFloat( result[ 1 ] );
-						normal.y = parseFloat( result[ 2 ] );
-						normal.z = parseFloat( result[ 3 ] );
-						normalCountPerFace ++;
+                        normal.x = parseFloat( result[ 1 ] );
+                        normal.y = parseFloat( result[ 2 ] );
+                        normal.z = parseFloat( result[ 3 ] );
+                        normalCountPerFace ++;
 
-					}
+                    }
 
-					while ( ( result = patternVertex.exec( text ) ) !== null ) {
+                    while ( ( result = patternVertex.exec( text ) ) !== null ) {
 
-						vertices.push( parseFloat( result[ 1 ] ), parseFloat( result[ 2 ] ), parseFloat( result[ 3 ] ) );
-						normals.push( normal.x, normal.y, normal.z );
-						vertexCountPerFace ++;
-						endVertex ++;
+                        vertices.push( parseFloat( result[ 1 ] ), parseFloat( result[ 2 ] ), parseFloat( result[ 3 ] ) );
+                        normals.push( normal.x, normal.y, normal.z );
+                        vertexCountPerFace ++;
+                        endVertex ++;
 
-					}
+                    }
 
-					// every face have to own ONE valid normal
+                    // every face have to own ONE valid normal
 
-					if ( normalCountPerFace !== 1 ) {
+                    if ( normalCountPerFace !== 1 ) {
 
-						console.error( 'THREE.STLLoader: Something isn\'t right with the normal of face number ' + faceCounter );
+                        console.error( 'THREE.STLLoader: Something isn\'t right with the normal of face number ' + faceCounter );
 
-					}
+                    }
 
-					// each face have to own THREE valid vertices
+                    // each face have to own THREE valid vertices
 
-					if ( vertexCountPerFace !== 3 ) {
+                    if ( vertexCountPerFace !== 3 ) {
 
-						console.error( 'THREE.STLLoader: Something isn\'t right with the vertices of face number ' + faceCounter );
+                        console.error( 'THREE.STLLoader: Something isn\'t right with the vertices of face number ' + faceCounter );
 
-					}
+                    }
 
-					faceCounter ++;
+                    faceCounter ++;
 
-				}
+                }
 
-				var start = startVertex;
-				var count = endVertex - startVertex;
+                var start = startVertex;
+                var count = endVertex - startVertex;
 
-				geometry.addGroup( start, count, groupCount );
-				groupCount ++;
+                geometry.addGroup( start, count, groupCount );
+                groupCount ++;
 
-			}
+            }
 
-			geometry.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
-			geometry.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
+            geometry.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+            geometry.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
 
-			return geometry;
+            return geometry;
 
-		}
+        }
 
-		function ensureString( buffer ) {
+        function ensureString( buffer ) {
 
-			if ( typeof buffer !== 'string' ) {
+            if ( typeof buffer !== 'string' ) {
 
-				return LoaderUtils.decodeText( new Uint8Array( buffer ) );
+                return LoaderUtils.decodeText( new Uint8Array( buffer ) );
 
-			}
+            }
 
-			return buffer;
+            return buffer;
 
-		}
+        }
 
-		function ensureBinary( buffer ) {
+        function ensureBinary( buffer ) {
 
-			if ( typeof buffer === 'string' ) {
+            if ( typeof buffer === 'string' ) {
 
-				var array_buffer = new Uint8Array( buffer.length );
-				for ( var i = 0; i < buffer.length; i ++ ) {
+                var array_buffer = new Uint8Array( buffer.length );
+                for ( var i = 0; i < buffer.length; i ++ ) {
 
-					array_buffer[ i ] = buffer.charCodeAt( i ) & 0xff; // implicitly assumes little-endian
+                    array_buffer[ i ] = buffer.charCodeAt( i ) & 0xff; // implicitly assumes little-endian
 
-				}
+                }
 
-				return array_buffer.buffer || array_buffer;
+                return array_buffer.buffer || array_buffer;
 
-			} else {
+            } else {
 
-				return buffer;
+                return buffer;
 
-			}
+            }
 
-		}
+        }
 
-		// start
+        // start
 
-		var binData = ensureBinary( data );
+        var binData = ensureBinary( data );
 
-		return isBinary( binData ) ? parseBinary( binData ) : parseASCII( ensureString( data ) );
+        return isBinary( binData ) ? parseBinary( binData ) : parseASCII( ensureString( data ) );
 
-	}
+    }
 
 } );
 
