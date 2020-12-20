@@ -11,10 +11,32 @@
     <script src="https://stemkoski.github.io/Three.js/js/OrbitControls.js"></script>
     <script src="https://stemkoski.github.io/Three.js/js/THREEx.FullScreen.js"></script>
     <script src="https://stemkoski.github.io/Three.js/js/THREEx.WindowResize.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
 </head>
 <body>
-
 <script>
+    // ---- CREATE GUI -----
+    function dummy(){ // example function to execute when GUI button is clicked
+        console.log("you're dumb")
+    }
+
+    // add buttons and parameters to GUI
+    const params = {
+        message1: "",
+        message2: "",
+        unusednum: 0.5,
+        unusedbool: true,
+        unusedfunct: dummy,
+    };
+
+    const gui = new dat.GUI();
+    gui.add(params, 'message1').onChange(function(value){message1 = value; refreshText()})
+    gui.add(params, 'message2').onChange(function(value){message2 = value; refreshText()})
+    gui.add(params, 'unusednum', 0, 1).step(0.01).onChange(function(value) {} );
+    gui.add(params, 'unusedbool')
+    gui.add(params, 'unusedfunct')
+
+    // ----- END GUI -----
 
     window.addEventListener("keypress", function(event) {
         if (!(event.which == 115 && event.ctrlKey) && !(event.which == 19)) return true
@@ -30,8 +52,8 @@
     let camera, cameraTarget, scene, renderer;
 
     let group, textMesh1, textMesh2, textGeo, materials, textMesh12, textMesh22, textGeo2;
-    let firstLetter = true;
-    let text = "three.js",
+    let message1 = "HELLO",
+        message2 = "WORLD",
         bevelEnabled = true,
         font = undefined,
         fontName = "optimer", // helvetiker, optimer, gentilis, droid sans, droid serif
@@ -43,8 +65,6 @@
         curveSegments = 4,
         bevelThickness = 2,
         bevelSize = 1.5;
-
-    const mirror = true;
 
     const fontMap = {
 
@@ -122,37 +142,10 @@
         pointLight2.position.set( 100, 100, 90 );
         scene.add( pointLight2 );
 
-        // Get text from hash
-
-        const hash = document.location.hash.substr( 1 );
-
-        if ( hash.length !== 0 ) {
-
-            const colorhash = hash.substring( 0, 6 );
-            const fonthash = hash.substring( 6, 7 );
-            const weighthash = hash.substring( 7, 8 );
-            const bevelhash = hash.substring( 8, 9 );
-            const texthash = hash.substring( 10 );
-
-            hex = colorhash;
-            pointLight.color.setHex( parseInt( colorhash, 16 ) );
-
-            fontName = reverseFontMap[ parseInt( fonthash ) ];
-            fontWeight = reverseWeightMap[ parseInt( weighthash ) ];
-
-            bevelEnabled = parseInt( bevelhash );
-
-            text = decodeURI( texthash );
-
-            // updatePermalink();
-
-        } else {
-
-            pointLight.color.setHSL( Math.random(), 1, 0.5 );
-            pointLight2.color.setHSL( Math.random(), 1, 0.5 );
-            hex = decimalToHex( pointLight.color.getHex() );
-
-        }
+        // set colors
+        pointLight.color.setHSL( Math.random(), 1, 0.5 );
+        pointLight2.color.setHSL( Math.random(), 1, 0.5 );
+        hex = decimalToHex( pointLight.color.getHex() );
 
         materials = [
             new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } ), // front
@@ -170,6 +163,7 @@
             new THREE.PlaneBufferGeometry( 10000, 10000 ),
             new THREE.MeshBasicMaterial( { color: 0xffffff, opacity: 0.5, transparent: true } )
         );
+
         plane.position.y = 100;
         plane.rotation.x = - Math.PI / 2;
         scene.add( plane );
@@ -190,57 +184,6 @@
 
         container.style.touchAction = 'none';
         container.addEventListener( 'pointerdown', onPointerDown, false );
-
-        document.addEventListener( 'keypress', onDocumentKeyPress, false );
-        document.addEventListener( 'keydown', onDocumentKeyDown, false );
-
-        // document.getElementById( "color" ).addEventListener( 'click', function () {
-        //
-        //     pointLight.color.setHSL( Math.random(), 1, 0.5 );
-        //     pointLight2.color.setHSL( Math.random(), 1, 0.5 );
-        //     hex = decimalToHex( pointLight.color.getHex() );
-        //
-        //     updatePermalink();
-        //
-        // }, false );
-
-        // document.getElementById( "font" ).addEventListener( 'click', function () {
-        //
-        //     fontIndex ++;
-        //
-        //     fontName = reverseFontMap[ fontIndex % reverseFontMap.length ];
-        //
-        //     loadFont();
-        //
-        // }, false );
-
-
-        // document.getElementById( "weight" ).addEventListener( 'click', function () {
-        //
-        //     if ( fontWeight === "bold" ) {
-        //
-        //         fontWeight = "regular";
-        //
-        //     } else {
-        //
-        //         fontWeight = "bold";
-        //
-        //     }
-        //
-        //     loadFont();
-        //
-        // }, false );
-
-        // document.getElementById( "bevel" ).addEventListener( 'click', function () {
-        //
-        //     bevelEnabled = ! bevelEnabled;
-        //
-        //     refreshText();
-        //
-        // }, false );
-
-        //
-
         window.addEventListener( 'resize', onWindowResize, false );
 
     }
@@ -264,62 +207,6 @@
 
     }
 
-    // function updatePermalink() {
-    //
-    //     const link = hex + fontMap[ fontName ] + weightMap[ fontWeight ] + boolToNum( bevelEnabled ) + "#" + encodeURI( text );
-    //
-    //     permalink.href = "#" + link;
-    //     window.location.hash = link;
-    //
-    // }
-
-    function onDocumentKeyDown( event ) {
-
-        if ( firstLetter ) {
-
-            firstLetter = false;
-            text = "";
-
-        }
-
-        const keyCode = event.keyCode;
-
-        // backspace
-
-        if ( keyCode == 8 ) {
-
-            event.preventDefault();
-
-            text = text.substring( 0, text.length - 1 );
-            refreshText();
-
-            return false;
-
-        }
-
-    }
-
-    function onDocumentKeyPress( event ) {
-
-        const keyCode = event.which;
-
-        // backspace
-
-        if ( keyCode == 8 ) {
-
-            event.preventDefault();
-
-        } else {
-
-            const ch = String.fromCharCode( keyCode );
-            text += ch;
-
-            refreshText();
-
-        }
-
-    }
-
     function loadFont() {
 
         const loader = new THREE.FontLoader();
@@ -330,21 +217,12 @@
             refreshText();
 
         } );
-
     }
 
-    function createText() {
-
-        let split_text = text.split( " " );
-
-        var text2;
-        if (split_text.length > 1) {
-            text2 = split_text[1]
-        } else {
-            text2 = "";
-        }
-
-        tempObject = new THREE.TextGeometry( text2, {
+    function createText() { // CREATE THE FIRST TEXT MESH
+        // ----- determine length of mesh 1 -----
+        // create a temporary instance of second mesh 2 in order to get the length of mesh 1
+        let tempObject = new THREE.TextGeometry( message2, {
 
             font: font,
 
@@ -355,13 +233,13 @@
             bevelThickness: bevelThickness,
             bevelSize: bevelSize,
             bevelEnabled: bevelEnabled
-
         } );
-        tempObject.computeBoundingBox();
-        let shape1Height = tempObject.boundingBox.max.x - tempObject.boundingBox.min.x;
 
+        tempObject.computeBoundingBox(); // compute bounding box of the temp mesh
+        let shape1Height = tempObject.boundingBox.max.x - tempObject.boundingBox.min.x; // determine shape1height
 
-        textGeo = new THREE.TextGeometry( text.split(" ")[0], {
+        // ------ create mesh 1 -----
+        let textGeo = new THREE.TextGeometry( message1, { // CREATE MESH 1
 
             font: font,
 
@@ -375,9 +253,10 @@
 
         } );
 
-        textGeo.computeBoundingBox();
-        textGeo.computeVertexNormals();
+        textGeo.computeBoundingBox(); // compute bounding box for text mesh
+        textGeo.computeVertexNormals(); // compute the center of the mesh (vertex normals)
 
+        // ----- WEIRD BEVEL SHIT I DONT UNDERSTAND -----
         const triangle = new THREE.Triangle();
 
         // "fix" side normals by removing z-component of normals for side faces
@@ -418,7 +297,7 @@
             }
         }
 
-        const centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
+        const centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x ); // rotation axis at center of message
 
         textGeo = new THREE.BufferGeometry().fromGeometry( textGeo );
 
@@ -441,37 +320,10 @@
         textMesh1.scale.set( 1, 1, 1 );
 
         group.add( textMesh1 );
-
-        if ( mirror ) {
-
-            textMesh2 = new THREE.Mesh( textGeo, materials );
-
-            textMesh2.position.x = centerOffset;
-            textMesh2.position.y = - hover;
-            textMesh2.position.z = height;
-
-            textMesh2.rotation.x = Math.PI;
-            textMesh2.rotation.y = Math.PI * 2;
-
-            group.add( textMesh2 );
-
-        }
-
     }
 
-    function createText2(array, offset) {
-
-        let split_text = text.split( " " );
-
-        var text2;
-        if (split_text.length > 1) {
-            text2 = split_text[1]
-        } else {
-            text2 = "";
-        }
-
-        tempObject = new THREE.TextGeometry( text.split(" ")[0], {
-
+    function createText2(array, offset) { // CREATE THE SECOND TEXT MESH
+        let tempObject = new THREE.TextGeometry( message1, {
             font: font,
 
             size: size,
@@ -486,7 +338,7 @@
         tempObject.computeBoundingBox();
         let shape2Height = tempObject.boundingBox.max.x - tempObject.boundingBox.min.x;
         console.log(shape2Height);
-        textGeo2 = new THREE.TextGeometry( text2, {
+        textGeo2 = new THREE.TextGeometry( message2, {
 
             font: font,
 
@@ -580,62 +432,16 @@
         textMesh12.position.z -= (boundingBox2.max.z - boundingBox1.max.z)
         textMesh12.position.y -= 0
 
-        // var corners1 = [
-        //     new THREE.Vector3(boundingBox1.min.x, boundingBox1.min.y, boundingBox1.min.z),
-        //     new THREE.Vector3(boundingBox1.min.x, boundingBox1.min.y, boundingBox1.max.z),
-        //     new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.max.z),
-        //     new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.min.z),
-        //     new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z),
-        //     new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.max.z),
-        //     new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.min.z),
-        //     new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.min.z)
-        // ];
-        //
-        // var corners2 = [
-        //     new THREE.Vector3(bbox.min.x, bbox.min.y, bbox.min.z),
-        //     new THREE.Vector3(bbox.min.x, bbox.min.y, bbox.max.z),
-        //     new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.max.z),
-        //     new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.min.z),
-        //     new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z),
-        //     new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.max.z),
-        //     new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.min.z),
-        //     new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.min.z)
-        // ];
-
-
         group.add( textMesh12 );
-
-        if ( mirror ) {
-
-            textMesh22 = new THREE.Mesh( textGeo2, materials );
-
-            textMesh22.position.x = centerOffset;
-            textMesh22.position.y = - hover;
-            textMesh22.position.z = height - 50;
-
-            textMesh22.rotation.x = Math.PI;
-            textMesh22.rotation.y = Math.PI/ 2;
-
-            group.add( textMesh22 );
-        }
 
     }
 
     function refreshText() {
-
-        // updatePermalink();
-
         group.remove( textMesh1 );
-        if ( mirror ) group.remove( textMesh2 );
-
         group.remove( textMesh12 );
-        if ( mirror ) group.remove( textMesh22 );
-
-        if ( ! text ) return;
 
         createText();
         createText2();
-
     }
 
     function onPointerDown( event ) {
@@ -669,26 +475,16 @@
 
     }
 
-    //
-
     function animate() {
-
         requestAnimationFrame( animate );
-
         render();
-        // stats.update();
-
     }
 
     function render() {
-
         group.rotation.y += ( targetRotation - group.rotation.y ) * 0.05;
-
         camera.lookAt( cameraTarget );
-
         renderer.clear();
         renderer.render( scene, camera );
-
     }
 </script>
 </body>
