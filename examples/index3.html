@@ -16,6 +16,9 @@
     import { STLLoader } from './jsm/loaders/STLLoader.js';
     import { STLExporter } from './jsm/exporters/STLExporter.js';
 
+    let letter_meshes = new Map()
+
+    //# sourceURL=index.js
     let letter_widths = {
         'A':10.3615,
         'B':9.3179,
@@ -49,7 +52,7 @@
     let message1 = "HELLO",
         message2 = "WORLD",
         color = "#FF0000",
-        spacing = 2
+        spacing = 2.5
 
     // create color palette
     const palette = {
@@ -60,7 +63,7 @@
     const params = {
         "Message 1": "HELLO",
         "Message 2": "WORLD",
-        "Spacing" : 0.5,
+        "Spacing" : 2.5,
         "Add Base": true,
         "Export": exportBinary
     };
@@ -228,67 +231,99 @@
             })
             obj.material.dispose()
         }
-    }   
+    }
 
+    function setObjectVisibility(obj, visibility) {
+        obj.traverse ( function (child) {
+            if (child instanceof THREE.Mesh) {
+                child.visible = visibility;
+            }
+        });
+    }
 
     function refreshText() {
-        // destroy whats there
-        // while (scene_trash.length > 1){
-            
-        //     scene.remove(scene.getObjectByProperty( 'uuid', scene_trash.pop() ));
-        // }
-        
         clearThree(group)
+        let current_message1 = message1
+
+        let current_message2 = message2
+
+        let current_spacing = spacing;
 
         // get grid data
         let grid_data = developGrid(message1, message2)
+
+        if (message1.length == 0 || message2.length == 0) {
+            requestRenderIfNotRequested()
+        }
 
         // load stls according to grid data
         let currentPosition = [0,0]
 
         let intersections_dir = './jsm/models/stl/binary/';
+        console.log(grid_data)
+
+        let meshes = []
 
         for (let i = 0; i<grid_data[0].length; i=i+1) {
             let objectFileName = intersections_dir + grid_data[0][i] + "_" + grid_data[1][i] + ".stl";
-            let moveX = grid_data[2][i]
-            let moveZ = grid_data[3][i]
-            let dx = 0; let dz = 0;
-            if (moveX) {
-                dx = currentPosition[0] + letter_widths[grid_data[0][i].charAt(0)]
+            let dx = currentPosition[0]; let dz = currentPosition[1];
+            if (i>0) {
+                let moveX = grid_data[2][i-1]
+                let moveZ = grid_data[3][i-1]
+                if (moveX) {
+                    dx = currentPosition[0] + current_spacing*letter_widths[grid_data[0][i-1].charAt(0)]
+                }
+                if (moveZ) {
+                    dz = currentPosition[1] - current_spacing*letter_widths[grid_data[1][i-1].charAt(0)]
+                }
             }
-            if (moveZ) {
-                dz = currentPosition[1] - spacing*letter_widths[grid_data[1][i].charAt(0)]
-            }
+            currentPosition[0] = dx;
+            currentPosition[1] = dz;
 
-            console.log("("+dx+","+dz+")");
-            try {
-                loader.load( objectFileName , function ( geometry ) {
-                    const material = new THREE.MeshPhongMaterial( { color: color, specular: 0x111111, shininess: 200 } );
-                    let mesh = new THREE.Mesh( geometry, material );
-                    mesh.position.set( spacing*dx, 0, spacing*dz );
-                    mesh.rotation.set( -Math.PI / 2, 0, 0);
-                    mesh.scale.set( 3, 3, 3 );
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-                    // scene.add( mesh );
-                    // scene_trash.push( mesh.uuid);
-                    group.add(mesh)
-                    // temp
-                    console.log("creating instance of "+grid_data[0][i] + "_" + grid_data[1][i] + ".stl at location ("+dx+","+dz+")")
-                } );
-            } catch(err){
-                console.log("tried to get nonexistent "+grid_data[0][i] + "_" + grid_data[1][i])
+            // console.log("("+dx+","+dz+")");
+
+            if (letter_meshes.has(grid_data[0][i] + "_" + grid_data[1][i])) {
+                processMesh(letter_meshes.get(grid_data[0][i] + "_" + grid_data[1][i]).clone(), dx, dz)
             }
-            currentPosition[0] = dx; currentPosition[1] = dz;
+            else {
+                try {
+                    loader.load( objectFileName , function ( geometry ) {
+                        letter_meshes.set(grid_data[0][i] + "_" + grid_data[1][i], geometry.clone())
+                        processMesh(geometry, dx, dz)
+                        console.log("creating instance of "+grid_data[0][i] + "_" + grid_data[1][i] + ".stl at location ("+dx+","+dz+")")
+                    } );
+                } catch(err){
+                    console.log("tried to get nonexistent "+grid_data[0][i] + "_" + grid_data[1][i])
+                }
+            }
         }
     }
 
+
+    function processMesh(geometry, dx, dz) {
+        const material = new THREE.MeshPhongMaterial( { color: color, specular: 0x111111, shininess: 200 } );
+        let mesh = new THREE.Mesh( geometry, material );
+        mesh.position.set( dx, 0, dz);
+        mesh.rotation.set( -Math.PI / 2, 0, 0);
+        mesh.scale.set( 3, 3, 3 );
+
+        mesh.updateMatrix();
+        mesh.geometry.applyMatrix4( mesh.matrix );
+        mesh.matrix.identity();
+
+        mesh.position.set( 0, 0, 0 );
+        mesh.rotation.set( 0, 0, 0 );
+        mesh.scale.set( 1, 1, 1 );
+
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        group.add(mesh)
+        requestRenderIfNotRequested()
+    }
     // ----- NEW WORDLD BELOW -----
 
-    let scene, scene_trash, camera, renderer, exporter, loader, mesh, group;
+    let scene, scene_trash, camera, renderer, exporter, loader, mesh, group, controls;
 
-    init();
-    animate();
 
     function init() {
 
@@ -358,13 +393,17 @@
 
         //
 
-        const controls = new OrbitControls( camera, renderer.domElement );
+        controls = new OrbitControls( camera, renderer.domElement );
         controls.target.set( 0, 25, 0 );
         controls.update();
-
+        controls.addEventListener('change', requestRenderIfNotRequested);
+        render();
         //
 
+        refreshText();
+
         window.addEventListener( 'resize', onWindowResize, false );
+        // animate()
     }
 
     function onWindowResize() {
@@ -373,16 +412,30 @@
         camera.updateProjectionMatrix();
 
         renderer.setSize( window.innerWidth, window.innerHeight );
-
+        requestRenderIfNotRequested()
     }
 
+    let renderRequested = false;
+
+    function render() {
+        renderRequested = undefined;
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+
+    function requestRenderIfNotRequested() {
+        if (!renderRequested) {
+            renderRequested = true;
+            requestAnimationFrame(render);
+        }
+    }
+
+    init();
+
     function animate() {
-        // const groupBox = new THREE.Box3();
-        // groupBox.setFromObject( group );
-        // group.translate(-groupBox.getCenter.x, -groupBox.getCenter.y, -groupBox.getCenter.z)
         requestAnimationFrame( animate );
         renderer.render( scene, camera );
-
     }
 
     function exportBinary() {
