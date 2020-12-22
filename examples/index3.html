@@ -65,7 +65,7 @@
         "Message 2": "WORLD",
         "Spacing" : 2.5,
         "Add Base": true,
-        "Export": exportBinary
+        "Export": function(){ downloadFile()}
     };
 
     const gui = new dat.GUI();
@@ -97,6 +97,7 @@
     )
 
     gui.add(params, 'Add Base');
+
     gui.add(params, 'Export');
 
     function developGrid(word1, word2) {
@@ -307,13 +308,13 @@
         mesh.rotation.set( -Math.PI / 2, 0, 0);
         mesh.scale.set( 3, 3, 3 );
 
-        mesh.updateMatrix();
-        mesh.geometry.applyMatrix4( mesh.matrix );
-        mesh.matrix.identity();
-
-        mesh.position.set( 0, 0, 0 );
-        mesh.rotation.set( 0, 0, 0 );
-        mesh.scale.set( 1, 1, 1 );
+        // mesh.updateMatrix();
+        // mesh.geometry.applyMatrix4( mesh.matrix );
+        // mesh.matrix.identity();
+        //
+        // mesh.position.set( 0, 0, 0 );
+        // mesh.rotation.set( 0, 0, 0 );
+        // mesh.scale.set( 1, 1, 1 );
 
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -335,7 +336,6 @@
         scene.background = new THREE.Color( 0xa0a0a0 );
         scene.fog = new THREE.Fog( 0xa0a0a0, 200, 1000 );
 
-        exporter = new STLExporter();
         loader = new STLLoader();
 
         const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
@@ -367,24 +367,6 @@
         grid.material.transparent = true;
         scene.add( grid );
 
-        // export mesh
-
-        // const geometry = new THREE.BoxBufferGeometry( 50, 50, 50 );
-        // const material = new THREE.MeshPhongMaterial( { color: color } );
-        //
-        // mesh = new THREE.Mesh( geometry, material );
-        // mesh.castShadow = true;
-        // mesh.position.y = 25;
-        // scene.add( mesh );
-
-        // ----- FROM LOADER DEMO -----
-
-
-
-        // ---- BACK TO EXPORT DEMO -----
-
-        //
-
         renderer = new THREE.WebGLRenderer( { antialias: true } );
         renderer.setPixelRatio( window.devicePixelRatio );
         renderer.setSize( window.innerWidth, window.innerHeight );
@@ -406,11 +388,24 @@
         // animate()
     }
 
-    function onWindowResize() {
+    function downloadFile() {
+        let exporter = new STLExporter();
+        let str = exporter.parse( group ); // Export the scene
+        let blob = new Blob( [str], { type : 'text/plain' } ); // Generate Blob from the string
+        //saveAs( blob, 'file.stl' ); //Save the Blob to file.stl
 
+        //Following code will help you to save the file without FileSaver.js
+        let link = document.createElement('a');
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.download = 'illusion.stl';
+        link.click();
+    }
+
+    function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-
         renderer.setSize( window.innerWidth, window.innerHeight );
         requestRenderIfNotRequested()
     }
@@ -436,37 +431,6 @@
     function animate() {
         requestAnimationFrame( animate );
         renderer.render( scene, camera );
-    }
-
-    function exportBinary() {
-
-        const result = exporter.parse( mesh, { binary: true } );
-        saveArrayBuffer( result, 'box.stl' );
-
-    }
-
-    const link = document.createElement( 'a' );
-    link.style.display = 'none';
-    document.body.appendChild( link );
-
-    function save( blob, filename ) {
-
-        link.href = URL.createObjectURL( blob );
-        link.download = filename;
-        link.click();
-
-    }
-
-    function saveString( text, filename ) {
-
-        save( new Blob( [ text ], { type: 'text/plain' } ), filename );
-
-    }
-
-    function saveArrayBuffer( buffer, filename ) {
-
-        save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
-
     }
 
 </script>
