@@ -1,7 +1,7 @@
-import * as THREE from '/build/three.module.js';
-import { OrbitControls } from '/examples/jsm/controls/OrbitControls.js';
-import { STLLoader } from '/examples/jsm/loaders/STLLoader.js';
-import { STLExporter } from '/examples/jsm/exporters/STLExporter.js';
+import * as THREE from './build/three.module.js';
+import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
+import { STLLoader } from './examples/jsm/loaders/STLLoader.js';
+import { STLExporter } from './examples/jsm/exporters/STLExporter.js';
 
 let letter_meshes = new Map()
 
@@ -205,7 +205,7 @@ function refreshText() {
     // load stls according to grid data
     let currentPosition = [0,0]
 
-    let intersections_dir = '/examples/jsm/models/stl/binary/';
+    let intersections_dir = './examples/jsm/models/stl/binary/';
 
     for (let i = 0; i<message1Letters.length; i++) {
         let objectFileName = intersections_dir + message1Letters[i] + "_" + message2Letters[i] + ".stl";
