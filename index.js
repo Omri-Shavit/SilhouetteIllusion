@@ -17,11 +17,15 @@ let letter_widths = {
 };
 
 // ----- CREATE GUI -----
-let message1 = "HELLO",
-    message2 = "WORLD",
-    isCycling = false,
-    color = "#000000",
-    spacing = 0;
+const url = new URL(window.location.href);
+const urlParams = new URLSearchParams(url.search);
+
+// initialize params
+let message1 = urlParams.get("message1") || "HELLO",
+    message2 = urlParams.get("message2") || "WORLD",
+    isCycling = Boolean(urlParams.get("isCycling")) || false,
+    color = urlParams.get("color") || "#000000",
+    spacing = Number(urlParams.get("spacing")) || 0;
 
 // create color palette
 const palette = {
@@ -48,36 +52,64 @@ const params = {
 gui.add(params, 'Message 1').onChange((value)=>{
     message1 = value.toUpperCase().replace(/[^A-Z ]/g, ''); // make everything uppercase and weed out non-alphabetic chars
     refreshText();
+    urlParams.set("message1", message1);
+    url.search = urlParams.toString();
+    window.history.pushState({}, '', url);
 });
 
 gui.add(params, 'Message 2').onChange((value)=>{
     message2 = value.toUpperCase().replace(/[^A-Z ]/g, ''); // make everything uppercase and weed out non-alphabetic chars
     refreshText();
+    urlParams.set("message2", message2);
+    url.search = urlParams.toString();
+    window.history.pushState({}, '', url);
 });
 gui.add(params, "Front View");
 gui.add(params, "Right View");
 
-const toggleCycleSwitch = gui.add(params, "Cycle Animation").onChange((isTurnedOn)=>{
-   if (isTurnedOn){
-       cycleBetweenViews(); // start the cycling
-   } else {
-       currentAnimId = 0; // stop the cycling
-   }
+const toggleCycleSwitch = gui.add(params, "Cycle Animation").onChange((value)=>{
+    isCycling = value;
+    if (isCycling){
+        cycleBetweenViews(); // start the cycling
+        urlParams.set("isCycling", String(isCycling));
+    } else {
+        currentAnimId = 0; // stop the cycling
+        urlParams.delete("isCycling");
+    }
+    url.search = urlParams.toString();
+    window.history.pushState({}, '', url);
 });
 
 gui.addColor(palette, 'Color').onChange((value)=>{
     color = value;
+    if (color !== '#000000'){
+        urlParams.set("color", color);
+    } else {
+        urlParams.delete("color");
+    }
+    url.search = urlParams.toString();
+    window.history.pushState({}, '', url);
     refreshText();
 });
 
 gui.add(params, 'Spacing', 0, 20).step(0.01).onChange((value)=>{
     spacing = value;
+    if (spacing !== 0){
+        urlParams.set("spacing", spacing);
+    } else {
+        urlParams.delete("spacing");
+    }
+    url.search = urlParams.toString();
+    window.history.pushState({}, '', url);
     refreshText();
 });
 
 // gui.add(params, 'Add Base');
 
 gui.add(params, 'Export');
+if (urlParams.has("message1") || urlParams.has("message2")){
+    gui.close();
+}
 
 // handle keystrokes e.g. left and right arrows trigger view left and view right respectively
 document.addEventListener("keydown", (e)=>{
@@ -355,7 +387,16 @@ function init() {
     orbitControls = new OrbitControls( camera, renderer.domElement );
     orbitControls.target.set( 0, 0, 0 );
     orbitControls.update();
+
+    // Note: the 'Cycle Animation' flag automatically shuts off when you orbit the camera (this by design) but the
+    // Event handler fires three times when the page is loaded, automatically cancelling isCycling=true when present
+    // in the urlParams, so we're just going to explicitly ignore the first three firings
+    let ignoreFirstKChanges = 3;
     orbitControls.addEventListener('change', ()=>{
+        if(ignoreFirstKChanges > 0){
+            ignoreFirstKChanges -= 1;
+            return;
+        }
         currentAnimId = 0; // cancels current animation if one's playing
         toggleCycleSwitch.setValue(false); // turns off cycle if one's happening
         requestRenderIfNotRequested();
@@ -514,6 +555,16 @@ function cycleBetweenViews(){
     }
     clock.start();
     animate0();
+    // if ( // skip phase 1 if camera is already at
+    //     Math.abs(camera.position.x)
+    //     + Math.abs(camera.position.y)
+    //     + Math.abs(camera.position.z-camerasDistanceToOrigin) < 1.0e-10
+    // ){
+    //     phase = 1;
+    //     animate1();
+    // } else {
+    //     animate0();
+    // }
 }
 
 
@@ -547,8 +598,12 @@ function requestRenderIfNotRequested() {
 }
 
 document.addEventListener("DOMContentLoaded", ()=>{
-    const urlParams = new URLSearchParams(window.location.search);
+    const isCyclingInitially = isCycling;
     init();
-    setTimeout(refreshText, 200); // for some reason text doesn't display properly sometimes
+    setTimeout(refreshText, 20); // for some reason text doesn't display properly sometimes
+    if(isCyclingInitially){
+        isCycling = true;
+        toggleCycleSwitch.setValue(isCycling);
+    }
 });
 console.log("Programmed by:\nOmri Shavit\nAlexandru Munteanu");
