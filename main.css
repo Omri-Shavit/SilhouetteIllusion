@@ -1,15 +1,22 @@
 body {
     margin: 0;
     background-color: #000;
-    color: #fff;
+    color: #000000;
     font-family: Monospace, monospace;
     font-size: 13px;
     line-height: 24px;
     overscroll-behavior: none;
 }
 
+#credits{
+    position: absolute;
+    bottom: 0;
+    right:0;
+    padding: 3px;
+}
+
 a {
-    color: #ff0;
+    color: #002aff;
     text-decoration: none;
 }
 
