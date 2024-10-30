@@ -51,6 +51,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "project.propDebugger",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -70,7 +71,7 @@
     <configuration default="true" type="ChromiumRemoteDebugType" factoryName="Chromium Remote" port="9229" restartOnDisconnect="true">
       <method v="2" />
     </configuration>
-    <configuration name="debug silhouette illusion page" type="JavascriptDebugType" uri="http://localhost:63342/silhouetteillusion/index.html" useBuiltInWebServerPort="true">
+    <configuration name="silhouetteillusion" type="JavascriptDebugType" nameIsGenerated="true" uri="http://localhost:63342/silhouetteillusion/" useFirstLineBreakpoints="true" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
   </component>
@@ -90,7 +91,9 @@
       <workItem from="1608670191992" duration="49000" />
       <workItem from="1649548317546" duration="166000" />
       <workItem from="1728962543995" duration="2398000" />
-      <workItem from="1729031707657" duration="59066000" />
+      <workItem from="1729031707657" duration="61925000" />
+      <workItem from="1730301662761" duration="2650000" />
+      <workItem from="1730304518617" duration="7849000" />
     </task>
     <servers />
   </component>
