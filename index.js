@@ -3,6 +3,7 @@ import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from './examples/jsm/loaders/STLLoader.js';
 import { STLExporter } from './examples/jsm/exporters/STLExporter.js';
 
+const intersections_dir = './examples/jsm/models/stl/binary/';
 const camerasDistanceToOrigin = 200;
 
 let letter_meshes = new Map();
@@ -27,6 +28,12 @@ let message1 = urlParams.get("message1") || "HELLO",
     color = urlParams.get("color") || "#000000",
     spacing = Number(urlParams.get("spacing")) || 0;
 
+// keep track of mesh size for resizing
+let totalMeshLength = 0.1; // updates when text
+let totalMeshWidth = 0.1;
+const meshPadding = 0.75; // longer dimension takes up 75% of screen width
+
+
 // create color palette
 const palette = {
     Color: '#000000',
@@ -36,8 +43,8 @@ const palette = {
 const gui = new dat.GUI();
 
 const params = {
-    "Message 1": "HELLO",
-    "Message 2": "WORLD",
+    "Message 1": message1,
+    "Message 2": message2,
     "Front View": ()=>{
         interpolateCameraToTarget(new THREE.Vector3(0, 0, camerasDistanceToOrigin));
     },
@@ -259,43 +266,50 @@ function refreshText() {
     // load stls according to grid data
     let currentPosition = [0, 0];
 
-    // letter_widths aren't exact so multiply them by experimentally found constant coefficient c
-    const C = 3.0;
-
-    let intersections_dir = './examples/jsm/models/stl/binary/';
     let m1CharacterIdx = 0, m2CharacterIdx = 0;
+
+    // calculate dimesnions of the mesh
+    totalMeshLength = message1.split("").map((c)=>letter_widths[c]).reduce((partialSum, term)=>partialSum + term, 0)
+        + spacing * (message1.length - 1);
+    totalMeshWidth = message2.split("").map((c)=>letter_widths[c]).reduce((partialSum, term)=>partialSum + term, 0)
+        + spacing * (message2.length - 1);
+
     for (let i = 0; i<message1Letters.length; i++) {
         let objectFileName = intersections_dir + message1Letters[i] + "_" + message2Letters[i] + ".stl";
-        let dx = currentPosition[0]; let dz = currentPosition[1];
+        let dx = currentPosition[0];
+        let dz = currentPosition[1];
         // handle spacing
         if (!doesLetteriOfMessage1Move[m1CharacterIdx] || message1Letters[i].length === 1){
-            dx += numberOfSpacesPrecedingLetterIInMessage1[m1CharacterIdx] * (C*letter_widths[' '] + spacing);
+            dx += numberOfSpacesPrecedingLetterIInMessage1[m1CharacterIdx] * (letter_widths[' '] + spacing);
         }
         if (!doesLetteriOfMessage2Move[m2CharacterIdx] || message2Letters[i].length === 1){
-            dz -= numberOfSpacesPrecedingLetterIInMessage2[m2CharacterIdx] * (C*letter_widths[' '] + spacing);
+            dz -= numberOfSpacesPrecedingLetterIInMessage2[m2CharacterIdx] * (letter_widths[' '] + spacing);
         }
         // continue to handle stuff
         if (i>0) {
             let moveX = doesLetteriOfMessage1Move[i-1];
             let moveZ = doesLetteriOfMessage2Move[i-1];
             if (moveX) {
-                dx += C*letter_widths[message1Letters[i-1].charAt(0)] + spacing;
+                dx += letter_widths[message1Letters[i-1].charAt(0)] + spacing;
             }
             if (moveZ) {
-                dz -= C*letter_widths[message2Letters[i-1].charAt(0)] + spacing;
+                dz -= letter_widths[message2Letters[i-1].charAt(0)] + spacing;
             }
         }
         currentPosition[0] = dx;
         currentPosition[1] = dz;
 
+        const x = -(totalMeshLength / 2.0) + dx;
+        const z = (totalMeshWidth / 2.0) + dz;
+
         if (letter_meshes.has(message1Letters[i] + "_" + message2Letters[i])) {
-            processMesh(letter_meshes.get(message1Letters[i] + "_" + message2Letters[i]).clone(), dx, dz)
+            processMesh(letter_meshes.get(message1Letters[i] + "_" + message2Letters[i]).clone(), x, z)
         }
         else {
             try {
                 loader.load( objectFileName , function ( geometry ) {
                     letter_meshes.set(`${message1Letters[i]}_${message2Letters[i]}`, geometry.clone());
-                    processMesh(geometry, dx, dz);
+                    processMesh(geometry, x, z);
                     // console.log(`creating instance of ${message1Letters[i]}_${message2Letters[i]}.stl at location (${dx},${dz})`);
                 } );
             } catch(err){
@@ -313,19 +327,27 @@ function refreshText() {
     }
 
     // center the text
-    new THREE.Box3().setFromObject( group ).getCenter( group.position ).multiplyScalar( - 1 );
+    // new THREE.Box3().setFromObject( group ).getCenter( group.position ).multiplyScalar( - 1 );
+    // // TODO: delete this
+    let bb = new THREE.Box3().setFromObject( group );
+    // console.log(`\n
+    //     message1:\"${message1}\", message2:\"${message2}\"\n
+    //     m1Length:${totalMeshLength}\n
+    // `);
 
     // add the group to the scene
     scene.add(group);
+    camera.zoom = meshPadding * window.innerWidth / Math.max(totalMeshLength, totalMeshWidth, 0.1);
+    camera.updateProjectionMatrix();
+    render();
 }
 
 
 function processMesh(geometry, dx, dz) {
     const material = new THREE.MeshPhongMaterial( {color: color, specular: 0x000000, shininess: 0} );
     const mesh = new THREE.Mesh( geometry, material );
-    mesh.position.set( dx, 0, dz);
+    mesh.position.set( dx, -5.0, dz);
     mesh.rotation.set( -Math.PI / 2, 0, 0);
-    mesh.scale.set( 3, 3, 3 );
 
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -385,6 +407,8 @@ function init() {
 
     // determine the behaviour of camera
     orbitControls = new OrbitControls( camera, renderer.domElement );
+    orbitControls.enablePan = false;
+
     orbitControls.target.set( 0, 0, 0 );
     orbitControls.update();
 
@@ -403,8 +427,6 @@ function init() {
     });
 
     refreshText();
-    render();
-
     window.addEventListener( 'resize', onWindowResize);
     // animate()
 }
@@ -575,6 +597,7 @@ function onWindowResize() {
     camera.right = window.innerWidth / 2;
     camera.top = window.innerHeight / 2;
     camera.bottom = window.innerHeight / -2;
+    camera.zoom = meshPadding * window.innerWidth / Math.max(totalMeshLength, totalMeshWidth, 0.1);
     camera.updateProjectionMatrix();
 
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -600,7 +623,6 @@ function requestRenderIfNotRequested() {
 document.addEventListener("DOMContentLoaded", ()=>{
     const isCyclingInitially = isCycling;
     init();
-    setTimeout(refreshText, 20); // for some reason text doesn't display properly sometimes
     if(isCyclingInitially){
         isCycling = true;
         toggleCycleSwitch.setValue(isCycling);
