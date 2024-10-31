@@ -120,9 +120,6 @@ if (urlParams.has("message1") || urlParams.has("message2")){
 
 // handle keystrokes e.g. left and right arrows trigger view left and view right respectively
 document.addEventListener("keydown", (e)=>{
-    if (document.activeElement.tagName === "INPUT"){
-        return; // don't turn the page when user is typing in a message
-    }
     if (e.key === "ArrowLeft"){
         interpolateCameraToTarget(new THREE.Vector3(0, 0, camerasDistanceToOrigin));
     } else if (e.key ==="ArrowRight"){
