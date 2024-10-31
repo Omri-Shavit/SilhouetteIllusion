@@ -1,5 +1,6 @@
 # Silhouette Illusion
 Check out the webpage [here](https://omri-shavit.github.io/SilhouetteIllusion/)!
+
 ![./demo.gif](./images/demo.gif)
 
 ### Usage
