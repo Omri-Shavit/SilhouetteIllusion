@@ -5,25 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b937144a-81a2-46e5-bbe4-44f0dc01367b" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/favicon/apple-touch-icon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/favicon/favicon-96x96.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/favicon/favicon.ico" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/favicon/favicon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/favicon/favicon.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/favicon/site.webmanifest" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/favicon/web-app-manifest-192x192.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/favicon/web-app-manifest-512x512.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/images/SilhouetteIllusionBanner.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/images/controls.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/images/demo.gif" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/images/johnSmithDemo.gif" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/index3.html" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,7 +90,7 @@
       <workItem from="1728962543995" duration="2398000" />
       <workItem from="1729031707657" duration="61925000" />
       <workItem from="1730301662761" duration="2650000" />
-      <workItem from="1730304518617" duration="24779000" />
+      <workItem from="1730304518617" duration="26009000" />
     </task>
     <servers />
   </component>
