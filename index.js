@@ -128,6 +128,7 @@ document.addEventListener("keydown", (e)=>{
 })
 
 // Here lies the brains of the operation when it comes to intelligently splitting up words
+// NGL I feel like this whole thing should be rewritten... TOO BAD!
 function determineM1M2LetterMapping(firstMessage, secondMessage) {
     // get rid of spaces in input messages (we handle those elsewhere)
     firstMessage = firstMessage.replaceAll(' ','');
@@ -323,17 +324,10 @@ function refreshText() {
         }
     }
 
-    // center the text
-    // new THREE.Box3().setFromObject( group ).getCenter( group.position ).multiplyScalar( - 1 );
-    // // TODO: delete this
-    let bb = new THREE.Box3().setFromObject( group );
-    // console.log(`\n
-    //     message1:\"${message1}\", message2:\"${message2}\"\n
-    //     m1Length:${totalMeshLength}\n
-    // `);
-
     // add the group to the scene
     scene.add(group);
+
+    // set camera zoom so that the text occupies {meshpadding} of the windows inner width
     camera.zoom = meshPadding * window.innerWidth / Math.max(totalMeshLength, totalMeshWidth, 0.1);
     camera.updateProjectionMatrix();
     render();
@@ -462,29 +456,13 @@ function interpolateCameraToTarget(endPosition) {
             return;
         }
         requestAnimationFrame(animate);
-
-        // Get the elapsed time since the animation started
         const elapsedTime = clock.getElapsedTime();
-
-        // Total time for the animation (e.g. 2 seconds)
         const duration = 2; // Adjust this value to control animation speed
-
-        // Interpolate position using lerp
-        const t = Math.min(elapsedTime / duration, 1); // Ensure t is in the 0-1 range
-
-        // Lerp the camera position between start and end
-        const currentPosition = new THREE.Vector3().lerpVectors(startPosition, endPosition, t);
-
-        // Update the camera's position
+        const t = Math.min(elapsedTime / duration, 1);
+        const currentPosition = new THREE.Vector3().lerpVectors(startPosition, endPosition, t); // TODO: make this spherical interpolation
         camera.position.copy(currentPosition);
-
-        // Ensure the camera always looks at the origin
         camera.lookAt(worldOrigin);
-
-        // Render the scene
-        renderer.render(scene, camera);
-
-        // When the animation reaches the target position (t === 1), stop the loop
+        render();
         if (t === 1) {
             animationDone = true; // Set the flag to true to stop further animation
         }
@@ -504,7 +482,10 @@ function cycleBetweenViews(){
     const id = currentAnimId;
     let phase = 0;
 
+    const verticalDelta = 0.1; // how much do you want the camera to rise / lower (must be between 0 and 1)
+
     // first, transition to the first view
+    // TODO: make this like interpolate
     function animate0(){
         if(phase !== 0 || currentAnimId !== id){
             return;
@@ -515,7 +496,7 @@ function cycleBetweenViews(){
         const currentPosition = new THREE.Vector3().lerpVectors(startPosition, cycleStartPosition, t);
         camera.position.copy(currentPosition);
         camera.lookAt(worldOrigin);
-        renderer.render(scene, camera);
+        render();
         if (t===1){ // phase 0 done
             phase = 1; // transition to phase 1
             setTimeout( ()=>{
@@ -531,15 +512,16 @@ function cycleBetweenViews(){
         requestAnimationFrame(animate1);
         const elapsedTime = clock.getElapsedTime();
         const t = Math.min(elapsedTime / cycleTransitionDurationSeconds, 1);
-        const c= Math.cos(Math.PI * t), s = Math.sin(Math.PI * t);
-        const currentPosition = new THREE.Vector3(
-            camerasDistanceToOrigin * 0.5 * (1-c),
-            camerasDistanceToOrigin * (Math.sqrt(2)/2) * s,
-            camerasDistanceToOrigin * 0.5 * (1+c)
-        );
+        const height = -verticalDelta*4*t*(1-t); // parabolic (like throwing ball in air)
+        const theta = (Math.PI/2)*(2*t*t*t -3*t*t + 1); // ease in, ease out
+        const radius = Math.sqrt(1 - height*height);
+        const x = camerasDistanceToOrigin * radius * Math.cos(theta);
+        const y = camerasDistanceToOrigin * height;
+        const z = camerasDistanceToOrigin * radius * Math.sin(theta);
+        const currentPosition = new THREE.Vector3(x,y,z);
         camera.position.copy(currentPosition);
         camera.lookAt(worldOrigin);
-        renderer.render(scene, camera);
+        render();
         if (t===1){ // phase 1 done
             phase = 2; // transition to phase 2
             setTimeout( ()=>{
@@ -555,15 +537,16 @@ function cycleBetweenViews(){
         requestAnimationFrame(animate2);
         const elapsedTime = clock.getElapsedTime();
         const t = Math.min(elapsedTime / cycleTransitionDurationSeconds, 1);
-        const c= Math.cos(Math.PI * t), s = Math.sin(Math.PI * t);
-        const currentPosition = new THREE.Vector3(
-            camerasDistanceToOrigin * 0.5 * (1+c),
-            camerasDistanceToOrigin * (-Math.sqrt(2)/2) * s,
-            camerasDistanceToOrigin * 0.5 * (1-c)
-        );
+        const height = verticalDelta*4*t*(1-t); // parabolic (like throwing ball in air)
+        const theta = (Math.PI/2)*(-2*t*t*t +3*t*t); // ease in, ease out
+        const radius = Math.sqrt(1 - height*height);
+        const x = camerasDistanceToOrigin * radius * Math.cos(theta);
+        const y = camerasDistanceToOrigin * height;
+        const z = camerasDistanceToOrigin * radius * Math.sin(theta);
+        const currentPosition = new THREE.Vector3(x,y,z);
         camera.position.copy(currentPosition);
         camera.lookAt(worldOrigin);
-        renderer.render(scene, camera);
+        render();
         if (t===1){ // phase 2 done
             phase = 1; // transition back to phase 1
             setTimeout( ()=>{
@@ -574,16 +557,6 @@ function cycleBetweenViews(){
     }
     clock.start();
     animate0();
-    // if ( // skip phase 1 if camera is already at
-    //     Math.abs(camera.position.x)
-    //     + Math.abs(camera.position.y)
-    //     + Math.abs(camera.position.z-camerasDistanceToOrigin) < 1.0e-10
-    // ){
-    //     phase = 1;
-    //     animate1();
-    // } else {
-    //     animate0();
-    // }
 }
 
 
@@ -595,7 +568,7 @@ function onWindowResize() {
     camera.top = window.innerHeight / 2;
     camera.bottom = window.innerHeight / -2;
     camera.zoom = meshPadding * window.innerWidth / Math.max(totalMeshLength, totalMeshWidth, 0.1);
-    camera.updateProjectionMatrix();
+    camera.updateProjectionMatrix(); // run this so camera.zoom update takes effect
 
     renderer.setSize( window.innerWidth, window.innerHeight );
     requestRenderIfNotRequested()
@@ -605,7 +578,6 @@ let renderRequested = false;
 
 function render() {
     renderRequested = undefined;
-    orbitControls.update();
     renderer.render(scene, camera);
 }
 
